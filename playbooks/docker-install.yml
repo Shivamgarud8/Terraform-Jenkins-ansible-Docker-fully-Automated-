@@ -1,0 +1,27 @@
+---
+- name: Install and configure Docker on EC2
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Update all system packages
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+
+    - name: Install Docker
+      ansible.builtin.yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ec2-user to docker group
+      ansible.builtin.user:
+        name: ec2-user
+        groups: docker
+        append: yes

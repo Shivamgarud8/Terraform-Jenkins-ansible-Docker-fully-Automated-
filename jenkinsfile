@@ -1,0 +1,118 @@
+pipeline {
+    agent any
+
+    environment {
+        // AWS credentials from Jenkins Credentials plugin
+        AWS_ACCESS_KEY_ID     = "Enter_your_key"
+        AWS_SECRET_ACCESS_KEY = "enter your secet key"
+
+        // Terraform / Ansible / SSH paths
+        TERRAFORM_DIR     = "/var/lib/jenkins/terraform-projects/my-infra"
+        ANSIBLE_INVENTORY = "/etc/ansible/playbooks/inventory"
+        ANSIBLE_PLAYBOOK  = "/etc/ansible/playbooks/docker-install.yml"
+        SSH_KEY           = "${TERRAFORM_DIR}/terraform.pem"
+
+        // GitHub repo for the app
+        GIT_REPO = "https://github.com/Shivamgarud8/docker-monitor.git"
+
+        // Docker settings
+        IMAGE_NAME     = "docker-monitor"
+        CONTAINER_NAME = "docker-monitor"
+        APP_PORT       = "5000"
+        DEPLOY_DIR     = "/opt/docker-monitor"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo "🔹 Cloning application code..."
+                git branch: 'main', url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Terraform Init & Apply') {
+            steps {
+                echo "🔹 Initializing and applying Terraform..."
+                dir("${TERRAFORM_DIR}") {
+                    sh "terraform init"
+                    sh "terraform apply -auto-approve"
+                }
+            }
+        }
+
+        stage('Generate Ansible Inventory') {
+            steps {
+                echo "🔹 Generating Ansible inventory..."
+                script {
+                    def ip = sh(
+                        script: "cd ${TERRAFORM_DIR} && terraform output -raw public_ip",
+                        returnStdout: true
+                    ).trim()
+
+                    sh """
+                    echo '[target]' > ${ANSIBLE_INVENTORY}
+                    echo '${ip} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_KEY} ansible_ssh_common_args="-o StrictHostKeyChecking=no"' >> ${ANSIBLE_INVENTORY}
+                    """
+                }
+            }
+        }
+
+        stage('Install Docker on EC2') {
+            steps {
+                echo "🔹 Installing Docker on target EC2..."
+                sh "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK}"
+            }
+        }
+
+        stage('Prepare Deployment Directory') {
+            steps {
+                echo "🔹 Creating deployment directory and setting permissions..."
+                sh """
+                ansible -i ${ANSIBLE_INVENTORY} target -m file \
+                  -a "path=${DEPLOY_DIR} state=directory mode=0755" --become
+
+                ansible -i ${ANSIBLE_INVENTORY} target -m file \
+                  -a "path=${DEPLOY_DIR} owner=ec2-user group=ec2-user recurse=yes" --become
+                """
+            }
+        }
+
+        stage('Sync Application Code') {
+            steps {
+                echo "🔹 Synchronizing application code to EC2..."
+                sh """
+                ansible -i ${ANSIBLE_INVENTORY} target -m synchronize \
+                  -a "src=${WORKSPACE}/ dest=${DEPLOY_DIR}/ delete=yes" --become
+                """
+            }
+        }
+
+        stage('Build & Run Docker Container') {
+            steps {
+                echo "🔹 Building Docker image and running container..."
+                sh """
+                ansible -i ${ANSIBLE_INVENTORY} target -m shell -a "
+                  cd ${DEPLOY_DIR} &&
+                  docker rm -f ${CONTAINER_NAME} || true &&
+                  docker build -t ${IMAGE_NAME} . &&
+                  docker run -d \
+                    --name ${CONTAINER_NAME} \
+                    -p ${APP_PORT}:5000 \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    ${IMAGE_NAME}
+                " --become
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ CI/CD Pipeline SUCCESS – Docker app deployed!"
+        }
+        failure {
+            echo "❌ CI/CD Pipeline FAILED – Check Jenkins logs"
+        }
+    }
+}
