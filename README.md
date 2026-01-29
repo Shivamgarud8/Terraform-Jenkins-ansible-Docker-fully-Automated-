@@ -208,11 +208,6 @@ http://<EC2-IP>:5000
 | AWS credentials | Jenkins credentials |
 | SSH key | Read-only |
 
-❌ Jenkins does NOT need root
-❌ Jenkins does NOT need Docker installed
-
----
-
 ### 🟩 Target EC2 Server
 
 | Item | Owner |
@@ -224,17 +219,7 @@ http://<EC2-IP>:5000
 
 Docker commands are executed **as root via Ansible become**.
 
----
 
-## ❌ Common Mistakes Avoided
-
-- ❌ Manual SSH into EC2
-- ❌ Adding `ec2-user` to docker group
-- ❌ Hard-coded IP addresses
-- ❌ Running Docker on Jenkins
-- ❌ Manual Docker commands
-
----
 
 ## ✅ Why This Architecture Is Correct
 
