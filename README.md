@@ -247,18 +247,21 @@ Docker commands are executed **as root via Ansible become**.
 
 ---
 
-## 👨‍💻 Author
-
-**Shivam Garud**  
-DevOps Engineer | Cloud & Automation Enthusiast
-
+---
+👩‍🏫 **Guided and Supported by [Trupti Mane Ma’am](https://github.com/iamtruptimane)**  
 ---
 
-⭐ If you found this project helpful, give it a star!
+👨‍💻 **Developed By:**  
+**Shivam Garud**  
+🧠 *DevOps & Cloud Enthusiast*  
+💼 *Automating deployments, one pipeline at a time!*  
+🌐 [GitHub Profile](https://github.com/Shivamgarud8)
+🌐 [Medium blog](https://medium.com/@shivam.garud2011)
+🌐 [linkedin](www.linkedin.com/in/shivam-garud)
+🌐 [portfolio](https://shivam-garud.vercel.app/)
 
 
 
-terraform folder : /var/lib/jenkins/terraform-projects/my-infra/
-keypair :/var/lib/jenkins/terraform-projects/my-infra
-yml file for ansible : /etc/ansible/playbooks/docker-installtiosn.yml
+
+
 
