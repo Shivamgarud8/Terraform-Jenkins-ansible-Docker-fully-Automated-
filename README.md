@@ -18,7 +18,7 @@ The entire pipeline runs from a **single Jenkins control server (Ubuntu)** and a
 - Requires **NO manual SSH**, **NO laptop involvement**, and **NO manual Docker commands**
 
 ---
-![output](./jenkins.png)
+![output](images/jenkins1.png)
 ## 🧠 High-Level Architecture
 
 > **Note:** This architecture runs with **NO laptop involvement**. Jenkins, Terraform, and Ansible all run on a single Ubuntu control server.
@@ -49,7 +49,7 @@ Jenkins (Ubuntu Control Server)
 ```
 
 ---
-![output](./jenkins1.png)
+![output](images/jenkins.png)
 ## 🛠️ Technology Stack
 
 | Tool | Purpose |
